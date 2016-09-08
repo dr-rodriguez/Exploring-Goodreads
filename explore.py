@@ -11,6 +11,7 @@ from nltk.stem.porter import PorterStemmer
 import string
 from utilities import my_replacements
 from collections import OrderedDict
+import numpy as np
 
 # Load data extracted from API (118 reviews)
 with open('reviews.pkl','r') as f:
@@ -81,9 +82,17 @@ g = (g.set(xlim=(-10, 1250), ylim=(-10, 120))
      .set_ylabels('Days to Read'))
 
 # Labels on longest to read
-
+longest = df[(df['timespan'] > 30) & (df['number_pages'].notnull())]
+for x, y, t in zip(longest['number_pages'].tolist(), longest['timespan'].tolist(),
+                   longest['title'].map(lambda x: x.split('(')[0].strip()).tolist()):
+    plt.text(x-1, y+2, t, color='k', ha='right', va='center')
 
 g.savefig('figures/reading_rate.png')
 
 # Shortest reads (some may be in error)
 df[df['timespan'] < 2]
+
+# Reading rate over time
+df['rate'] = df['number_pages']/df['timespan']
+df.replace([np.inf, -np.inf], np.nan, inplace=True)  # Fixing infinite values
+df.groupby(by='year_read', axis=0)[['timespan','number_pages','rate']].mean()
