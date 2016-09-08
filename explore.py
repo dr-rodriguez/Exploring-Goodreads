@@ -104,3 +104,13 @@ df[df['timespan'] < 2]
 df['rate'] = df['number_pages']/df['timespan']
 df.replace([np.inf, -np.inf], np.nan, inplace=True)  # Fixing infinite values
 df.groupby(by='year_read', axis=0)[['timespan','number_pages','rate']].mean()
+
+g = sns.factorplot(x='year_read', y='rate', data=df, size=8)
+g = (g.set(ylim=(-10, 200))
+     .set_xlabels('Year Read')
+     .set_ylabels('Number of Pages Read Per Day'))
+# Annotate with how many books read for that year. NOTE: not all books have pages/timespan
+count = df.groupby(by='year_read', axis=0)[['rate', 'title']].count().reset_index()
+for i, row in count.iterrows():
+    plt.text(i, 2, '{}/{}'.format(row['rate'], row['title']), color='k', ha='center', va='center')
+g.savefig('figures/reading_rate_2.png')

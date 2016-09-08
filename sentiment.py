@@ -17,8 +17,6 @@ numeric_columns = ['rating', 'timespan', 'year_read', 'publication_year', 'publi
 for col in numeric_columns:
     df[col] = pd.to_numeric(df[col], errors='ignore')
 
-# text = ' '.join(df['text'].tolist())
-
 # Clean up the text & get sentiment
 sentiment = list()
 with tqdm(total=len(df)) as pbar:
@@ -28,15 +26,12 @@ with tqdm(total=len(df)) as pbar:
         sentiment.append(elem_emotion)
         pbar.update(1)
 
-# import textwrap
-# print(textwrap.fill(new_elem))
-
 df_sentiment = pd.DataFrame(sentiment)
 df = df.join(df_sentiment)
-
-# Plots
 df['positivity'] = df['positive'] - df['negative']
 
+
+# Make plots
 g = sns.lmplot(x='average_rating', y='positivity', data=df, y_jitter=0.5, size=8, scatter_kws={'s': 80})
 g = (g.set_xlabels('Average Rating')
      .set_ylabels('Positivity (with 0.5 jitter)'))
