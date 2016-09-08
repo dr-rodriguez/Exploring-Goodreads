@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from utilities import my_replacements
 
 # Load data extracted from API (118 reviews)
-with open('reviews.pkl','r') as f:
+with open('data/reviews.pkl','r') as f:
     df = pickle.load(f)
 
 filename = 'figures/wordcloud.png'

@@ -65,5 +65,5 @@ columns = ['title', 'author', 'rating', 'text', 'timespan', 'year_read', 'public
 df = pd.DataFrame(data, columns=columns)
 
 # Save to pickle to avoid re-accessing API
-with open('reviews.pkl', 'w') as f:
+with open('data/reviews.pkl', 'w') as f:
     pickle.dump(df, f)

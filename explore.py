@@ -14,7 +14,7 @@ from collections import OrderedDict
 import numpy as np
 
 # Load data extracted from API (118 reviews)
-with open('reviews.pkl','r') as f:
+with open('data/reviews.pkl','r') as f:
     df = pickle.load(f)
 
 # Numeric columns
