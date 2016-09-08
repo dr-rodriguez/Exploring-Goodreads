@@ -2,7 +2,18 @@
 
 import re
 
+
 def my_replacements(text):
+    """
+    Quick function to clean up some of my review text. It clears HTML and some extra characters.
+    Also removes my frequent mentions of full reviews on my blog.
+
+    :param text:
+        Text to process
+    :return:
+        Processed text
+    """
+
     text = re.sub(r'<(.*?)>', ' ', text)  # removing HTML code encapsulated within <>
     text = re.sub(r'\n', ' ', text)  # removing newline characters
     text = re.sub(r'&nbsp;', ' ', text)  # removing some extra HTML code
