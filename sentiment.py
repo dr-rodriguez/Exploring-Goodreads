@@ -63,3 +63,7 @@ for x, y, t in zip(subset['average_rating'].tolist(), subset['positivity'].tolis
     plt.text(x, y, t, color='k', ha='left', va='bottom')
 
 plt.savefig('figures/sentiment_3.png')
+
+# Save the sentiment data
+with open('data/reviews_sentiment.pkl', 'w') as f:
+    pickle.dump(df, f)
