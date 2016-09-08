@@ -68,6 +68,13 @@ g.savefig('figures/rating_comparison.png')
 # Year read vs published
 g = sns.lmplot(x="year_read", y="publication_year", hue='rating', data=df, fit_reg=False, size=8,
                legend=False, scatter_kws={'s': 80})
+
+# Labels on old books
+year_books = df[(df['publication_year'] < 1995) & (df['year_read'].notnull())]
+for x, y, t in zip(year_books['year_read'].tolist(), year_books['publication_year'].tolist(),
+                   year_books['title'].map(lambda x: x.split('(')[0].strip()).tolist()):
+    plt.text(x+0.5, y-0.5, t, color='k', ha='center', va='top')
+
 g.set_xlabels('Year Read')
 g.set_ylabels('Year Published')
 g.ax.get_xaxis().get_major_formatter().set_useOffset(False)
@@ -80,7 +87,6 @@ g = sns.lmplot(x="number_pages", y="timespan", data=df, size=8, scatter_kws={'s'
 g = (g.set(xlim=(-10, 1250), ylim=(-10, 120))
      .set_xlabels('Number of Pages')
      .set_ylabels('Days to Read'))
-
 # Labels on longest to read
 longest = df[(df['timespan'] > 30) & (df['number_pages'].notnull())]
 for x, y, t in zip(longest['number_pages'].tolist(), longest['timespan'].tolist(),
@@ -89,8 +95,10 @@ for x, y, t in zip(longest['number_pages'].tolist(), longest['timespan'].tolist(
 
 g.savefig('figures/reading_rate.png')
 
+
 # Shortest reads (some may be in error)
 df[df['timespan'] < 2]
+
 
 # Reading rate over time
 df['rate'] = df['number_pages']/df['timespan']
