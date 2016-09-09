@@ -7,12 +7,33 @@ from sklearn import tree
 from sklearn.externals.six import StringIO
 import pydot
 from collections import Counter
+from utilities import pretty_cm
+from sklearn.pipeline import Pipeline
+from sklearn.externals import joblib
+from sklearn.decomposition import PCA
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.cross_validation import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 with open('data/reviews_sentiment.pkl', 'r') as f:
     df = pickle.load(f)
 
+with open('data/author_info.pkl', 'r') as f:
+    df_author = pickle.load(f)
+
+# Merge author information
+df = pd.merge(df, df_author, how='left', left_on='author', right_on='author')
+# Set gender to be 0/1. Nones are assumed male (0)
+gender = {'male': 0, 'female': 1}
+df.replace(to_replace=gender, inplace=True)
+df.loc[df['gender'].isnull(), 'gender'] = 0
+
 # Select columns to consider
-cols = ['author', 'publication_year', 'average_rating', 'number_pages', 'number_ratings', 'rating', 'positivity']
+cols = ['author', 'publication_year', 'average_rating', 'number_pages', 'works', 'fans', 'number_ratings', 'gender',
+        'rating', 'positivity']
 data = df[cols].copy()
 data.dropna(axis=0, inplace=True)  # eliminate missing values
 ratings = data['rating']
@@ -22,13 +43,15 @@ positivity = data['positivity']
 # Authors what I have read 1-2 times will be grouped together as 'Other' to avoid too many variables
 freq_author = Counter(data['author'])
 for author in freq_author:
-    if freq_author[author] < 3:
-        data.replace(author, 'Other Authors', inplace=True)
+    if freq_author[author] < 2:
+        data.replace(author, 'Single-Read Authors', inplace=True)
 
 # Set authors as dummy variables
 dummy_var = pd.get_dummies(data['author'])
 data = data[cols[1:-2]]  # remove extra columns
 data = data.join(dummy_var)
+columns = data.columns.tolist()
+data = data[columns[:7] + ['Single-Read Authors']].copy()
 
 # Clean up unicode characters in column names
 columns = data.columns.tolist()
@@ -47,5 +70,52 @@ tree.export_graphviz(clf, out_file=dot_data,
 graph = pydot.graph_from_dot_data(dot_data.getvalue())
 graph.write_pdf("figures/decision_tree_rating.pdf")
 
-# TODO: Split data to training/test set
-# TODO: Create random forest model
+
+# Prepare and split data to training/test set
+df_train, df_test, train_label, test_label = train_test_split(data, ratings, test_size=0.2, random_state=42)
+
+rf = RandomForestClassifier(max_depth=None, min_samples_split=1, n_estimators=100, random_state=42)
+
+# Fit and predict model
+rf.fit(df_train, train_label)
+prediction = rf.predict(df_test)
+print(classification_report(test_label, prediction))
+cm = confusion_matrix(test_label, prediction)
+pretty_cm(cm, show_sum=True)
+
+# Save model
+joblib.dump(rf, 'data/model/ratings_model.pkl')
+
+
+# Now, for positivity (as a continuous variable)
+df_train, df_test, train_label, test_label = train_test_split(data, positivity, test_size=0.2, random_state=42)
+rf_reg = RandomForestRegressor(max_depth=None, min_samples_split=1, n_estimators=100, random_state=42)
+rf_reg.fit(df_train, train_label)
+prediction = rf_reg.predict(df_test)
+
+diff = test_label - prediction
+print('Average difference: {:.2f} and standard deviation: {:.2f}'.format(diff.mean(), diff.std()))
+
+# Save model
+joblib.dump(rf, 'data/model/positivity_model.pkl')
+
+# Feature importance
+nice_columns = ['Publication Year', 'Average Rating', 'Number of Pages', 'Number of Works', 'Number of Fans',
+                'Number of Ratings', 'Author Gender', 'Other Authors']
+importance = pd.DataFrame(rf.feature_importances_, index=nice_columns)
+importance = importance.reset_index()
+importance.columns = ['Feature', 'Importance']
+importance_reg = pd.DataFrame(rf_reg.feature_importances_, index=nice_columns)
+importance_reg = importance_reg.reset_index()
+importance_reg.columns = ['Feature', 'Importance']
+
+importance['Type'] = ['Ratings'] * len(importance)
+importance_reg['Type'] = ['Positivity'] * len(importance_reg)
+importance = importance.append(importance_reg).reset_index()
+
+g = sns.barplot(x='Feature', y='Importance', data=importance, hue='Type', palette='Set1')
+g.set_xlabel('Feature')
+g.set_ylabel('Importance')
+g.set_xticklabels(g.xaxis.get_majorticklabels(), rotation=90)
+plt.tight_layout()
+plt.savefig('figures/rf_features.png')

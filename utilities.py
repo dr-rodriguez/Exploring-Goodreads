@@ -61,3 +61,12 @@ def get_sentiment(text, more_stop_words=['']):
         emotion_map[key] = len(x)
 
     return emotion_map
+
+
+def pretty_cm(cm, label_names=['3', '4', '5'], show_sum=False):
+    table = pd.DataFrame(cm, columns=['P-' + s for s in label_names], index=['T-' + s for s in label_names])
+    print(table)
+    if show_sum:
+        print('Sum of columns: {}'.format(cm.sum(axis=0)))
+        print('Sum of rows: {}'.format(cm.sum(axis=1)))
+    print('')
