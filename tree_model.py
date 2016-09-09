@@ -8,12 +8,9 @@ from sklearn.externals.six import StringIO
 import pydot
 from collections import Counter
 from utilities import pretty_cm
-from sklearn.pipeline import Pipeline
 from sklearn.externals import joblib
-from sklearn.decomposition import PCA
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.cross_validation import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -71,9 +68,9 @@ graph = pydot.graph_from_dot_data(dot_data.getvalue())
 graph.write_pdf("figures/decision_tree_rating.pdf")
 
 
+# Now for the random forest
 # Prepare and split data to training/test set
 df_train, df_test, train_label, test_label = train_test_split(data, ratings, test_size=0.2, random_state=42)
-
 rf = RandomForestClassifier(max_depth=None, min_samples_split=1, n_estimators=100, random_state=42)
 
 # Fit and predict model
@@ -90,14 +87,16 @@ joblib.dump(rf, 'data/model/ratings_model.pkl')
 # Now, for positivity (as a continuous variable)
 df_train, df_test, train_label, test_label = train_test_split(data, positivity, test_size=0.2, random_state=42)
 rf_reg = RandomForestRegressor(max_depth=None, min_samples_split=1, n_estimators=100, random_state=42)
+
+# Fit and predict model
 rf_reg.fit(df_train, train_label)
 prediction = rf_reg.predict(df_test)
-
 diff = test_label - prediction
 print('Average difference: {:.2f} and standard deviation: {:.2f}'.format(diff.mean(), diff.std()))
 
 # Save model
 joblib.dump(rf, 'data/model/positivity_model.pkl')
+
 
 # Feature importance
 nice_columns = ['Publication Year', 'Average Rating', 'Number of Pages', 'Number of Works', 'Number of Fans',
@@ -108,7 +107,6 @@ importance.columns = ['Feature', 'Importance']
 importance_reg = pd.DataFrame(rf_reg.feature_importances_, index=nice_columns)
 importance_reg = importance_reg.reset_index()
 importance_reg.columns = ['Feature', 'Importance']
-
 importance['Type'] = ['Ratings'] * len(importance)
 importance_reg['Type'] = ['Positivity'] * len(importance_reg)
 importance = importance.append(importance_reg).reset_index()
