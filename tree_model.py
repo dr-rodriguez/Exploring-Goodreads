@@ -100,7 +100,7 @@ joblib.dump(rf, 'data/model/positivity_model.pkl')
 
 # Feature importance
 nice_columns = ['Publication Year', 'Average Rating', 'Number of Pages', 'Number of Works', 'Number of Fans',
-                'Number of Ratings', 'Author Gender', 'Other Authors']
+                'Number of Ratings', 'Author Gender', 'Single-Read Authors']
 importance = pd.DataFrame(rf.feature_importances_, index=nice_columns)
 importance = importance.reset_index()
 importance.columns = ['Feature', 'Importance']
