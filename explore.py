@@ -114,3 +114,25 @@ count = df.groupby(by='year_read', axis=0)[['rate', 'title']].count().reset_inde
 for i, row in count.iterrows():
     plt.text(i, 2, '{}/{}'.format(row['rate'], row['title']), color='k', ha='center', va='center')
 g.savefig('figures/reading_rate_2.png')
+
+
+# Most frequent authors
+# Get most frequent authors. Rare authors will be grouped together as 'Other' to avoid too many variables
+freq_author = Counter(df['author'])
+count = 0
+others = 0
+for author in freq_author:
+    if freq_author[author] < 2:
+        others += freq_author[author]
+    else:
+        count += 1
+
+# Quick Plot to check most frequent authors
+top_authors = OrderedDict(freq_author.most_common(count))
+top_authors['Other Authors'] = others
+g = sns.barplot(x=top_authors.keys(), y=top_authors.values(), palette="Greens_d")
+g.set_xlabel('Author')
+g.set_ylabel('Books Read')
+g.set_xticklabels(g.xaxis.get_majorticklabels(), rotation=90)
+plt.tight_layout()
+plt.savefig('figures/author_frequency.png')
