@@ -67,3 +67,28 @@ df = pd.DataFrame(data, columns=columns)
 # Save to pickle to avoid re-accessing API
 with open('data/reviews.pkl', 'w') as f:
     pickle.dump(df, f)
+
+# Extract additional author information from Goodreads
+author_data = list()
+for name in set(df['author']):
+    author = gc.find_author(name)
+    print(name)
+    try:
+        print author._author_dict
+        works = author.works_count
+        fans = author.fans_count()['#text']
+        town = author.hometown
+        gender = author.gender
+    except:
+        works, fans, town, gender = '', '', '', ''
+
+    author_data.append([name, works, fans, town, gender])
+    time.sleep(1)
+
+columns = ['author', 'works', 'fans', 'hometown', 'gender']
+df_author = pd.DataFrame(author_data, columns=columns)
+for col in ['works', 'fans']:
+    df_author[col] = pd.to_numeric(df_author[col], errors='ignore')
+
+with open('data/author_info.pkl', 'w') as f:
+    pickle.dump(df_author, f)
