@@ -132,7 +132,7 @@ top_authors = OrderedDict(freq_author.most_common(count))
 top_authors['Other Authors'] = others
 g = sns.barplot(x=top_authors.keys(), y=top_authors.values(), palette="Greens_d")
 g.set_xlabel('Author')
-g.set_ylabel('Books Read')
+g.set_ylabel('Books Reviewed')
 g.set_xticklabels(g.xaxis.get_majorticklabels(), rotation=90)
 plt.tight_layout()
 plt.savefig('figures/author_frequency.png')

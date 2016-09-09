@@ -34,7 +34,7 @@ data = data.join(dummy_var)
 columns = data.columns.tolist()
 columns = ['{}'.format(s.encode('utf-8').decode('ascii', errors='ignore')) for s in columns]
 
-clf = tree.DecisionTreeClassifier(max_depth=None)
+clf = tree.DecisionTreeClassifier(max_depth=7, min_samples_split=3)
 clf = clf.fit(data, ratings)
 
 # Examine the tree
