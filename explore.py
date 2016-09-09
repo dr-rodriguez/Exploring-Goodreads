@@ -78,7 +78,7 @@ for x, y, t in zip(year_books['year_read'].tolist(), year_books['publication_yea
 g.set_xlabels('Year Read')
 g.set_ylabels('Year Published')
 g.ax.get_xaxis().get_major_formatter().set_useOffset(False)
-g.fig.get_axes()[0].legend(title= 'My Rating', loc='lower right')
+g.fig.get_axes()[0].legend(title='My Rating', loc='lower right')
 g.savefig('figures/years.png')
 
 
