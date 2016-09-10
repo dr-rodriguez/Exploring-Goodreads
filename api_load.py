@@ -5,11 +5,10 @@ import pandas as pd
 from dateutil.parser import parse
 import time
 import pickle
-from my_settings import api_key, api_secret
+from my_settings import api_key, api_secret, username  # loading private information
 
 gc = client.GoodreadsClient(api_key, api_secret)
 gc.authenticate()
-username = 'Strakul'
 
 user = gc.user(username=username)
 

@@ -37,7 +37,7 @@ ratings = data['rating']
 positivity = data['positivity']
 
 # Get most frequent authors.
-# Authors what I have read 1-2 times will be grouped together as 'Other' to avoid too many variables
+# Authors what I have read just once will be grouped together as 'Single-Read' to avoid too many variables
 freq_author = Counter(data['author'])
 for author in freq_author:
     if freq_author[author] < 2:
@@ -58,14 +58,16 @@ clf = tree.DecisionTreeClassifier(max_depth=7, min_samples_split=3)
 clf = clf.fit(data, ratings)
 
 # Examine the tree
+nice_columns = ['Publication Year', 'Average Rating', 'Number of Pages', 'Number of Works', 'Number of Fans',
+                'Number of Ratings', 'Author Gender', 'Single-Read Authors']
 dot_data = StringIO()
 tree.export_graphviz(clf, out_file=dot_data,
-                     feature_names=columns,
-                     class_names=[str(x) for x in range(2,6)],
+                     feature_names=nice_columns,
+                     class_names=['{}-star'.format(x) for x in range(2, 6)],
                      filled=True, rounded=True,
-                     special_characters=True)
+                     special_characters=True, label='all')
 graph = pydot.graph_from_dot_data(dot_data.getvalue())
-graph.write_pdf("figures/decision_tree_rating.pdf")
+graph.write_png("figures/decision_tree_rating.png")
 
 
 # Now for the random forest
@@ -95,17 +97,13 @@ diff = test_label - prediction
 print('Average difference: {:.2f} and standard deviation: {:.2f}'.format(diff.mean(), diff.std()))
 
 # Save model
-joblib.dump(rf, 'data/model/positivity_model.pkl')
+joblib.dump(rf_reg, 'data/model/positivity_model.pkl')
 
 
 # Feature importance
-nice_columns = ['Publication Year', 'Average Rating', 'Number of Pages', 'Number of Works', 'Number of Fans',
-                'Number of Ratings', 'Author Gender', 'Single-Read Authors']
-importance = pd.DataFrame(rf.feature_importances_, index=nice_columns)
-importance = importance.reset_index()
+importance = pd.DataFrame(rf.feature_importances_, index=nice_columns).reset_index()
 importance.columns = ['Feature', 'Importance']
-importance_reg = pd.DataFrame(rf_reg.feature_importances_, index=nice_columns)
-importance_reg = importance_reg.reset_index()
+importance_reg = pd.DataFrame(rf_reg.feature_importances_, index=nice_columns).reset_index()
 importance_reg.columns = ['Feature', 'Importance']
 importance['Type'] = ['Ratings'] * len(importance)
 importance_reg['Type'] = ['Positivity'] * len(importance_reg)
