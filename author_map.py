@@ -15,13 +15,6 @@ with open('data/author_info.pkl', 'r') as f:
 # Parse the hometown with the Google API
 data = list()
 for i, row in df_author.iterrows():
-    try:
-        print('{} {}'.format(row['author'].encode('utf-8').decode('ascii', errors='ignore'),
-                            row['hometown'].encode('utf-8').decode('ascii', errors='ignore')))
-    except AttributeError:
-        print('{} {}'.format(row['author'].encode('utf-8').decode('ascii', errors='ignore'),
-                             row['hometown']))
-
     if row['hometown'] is None:
         status = None
     else:
@@ -55,8 +48,11 @@ x, y = themap(full_data['lon'].values, full_data['lat'].values)
 themap.plot(x, y, 'o', color='Green', markersize=6)
 for label, xpt, ypt, lat, lon in zip(full_data['author'], x, y, full_data['lat'], full_data['lon']):
     if lat < 20 or lon > 100:
-        plt.text(xpt, ypt+100000, label, ha='center', va='bottom')
-
+        if label == 'Fuyumi Ono':
+            plt.text(xpt, ypt-150000, label, ha='center', va='top')
+        else:
+            plt.text(xpt, ypt+100000, label, ha='center', va='bottom')
+plt.tight_layout()
 plt.savefig('figures/fullmap.png')
 
 
@@ -86,6 +82,7 @@ for label, xpt, ypt, lat in zip(full_data['author'], x, y, full_data['lat']):
             plt.text(xpt, ypt+100000, label, ha='right')
         else:
             plt.text(xpt, ypt+100000, label, ha='center')
+plt.tight_layout()
 plt.savefig('figures/usmap.png')
 
 
@@ -112,4 +109,5 @@ themap.plot(x, y, 'o', color='Green', markersize=10)
 for label, xpt, ypt, lat in zip(full_data['author'], x, y, full_data['lat']):
     if lat < 51 or lat > 53:
         plt.text(xpt, ypt+80000, label, ha='center')
+plt.tight_layout()
 plt.savefig('figures/europemap.png')
