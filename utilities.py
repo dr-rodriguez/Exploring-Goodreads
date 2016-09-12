@@ -5,6 +5,8 @@ import pandas as pd
 from collections import Counter
 from nltk.tokenize import wordpunct_tokenize
 from nltk.corpus import stopwords
+import requests
+import simplejson
 
 
 def my_replacements(text):
@@ -70,3 +72,28 @@ def pretty_cm(cm, label_names=['3', '4', '5'], show_sum=False):
         print('Sum of columns: {}'.format(cm.sum(axis=0)))
         print('Sum of rows: {}'.format(cm.sum(axis=1)))
     print('')
+
+
+def geo_api_search(loc):
+    """
+    Use Google API to get location information
+
+    :param loc: string to parse
+    :return: status, latitude, longitude
+    """
+
+    url = 'http://maps.googleapis.com/maps/api/geocode/json'
+    params = {'address': loc.strip(), 'sensor': 'false'}
+
+    r = requests.get(url, params=params)
+    data = simplejson.loads(r.text)
+
+    if data['status'] in ['OK']:
+        lat = data['results'][0]['geometry']['location']['lat']
+        lon = data['results'][0]['geometry']['location']['lng']
+        geo = [lat, lon]  # lat first, then lon
+    else:
+        geo = None
+
+    return data['status'], geo
+
