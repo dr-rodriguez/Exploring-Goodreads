@@ -16,6 +16,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.preprocessing import Imputer
 import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
 # from sklearn import grid_search
 
 with open('data/reviews_sentiment.pkl', 'r') as f:
@@ -72,13 +73,14 @@ print(Counter(ratings))  # check how many in each bin
 clf = tree.DecisionTreeClassifier(max_depth=7, min_samples_split=3)
 clf = clf.fit(data, ratings)
 
+# class_names = ['{}-star'.format(x) for x in range(0, 2)]
+# class_names = ['1-4 stars', '5-star']
+class_names = ['1-3 stars', '4-star', '5-star']
+
 # Examine the tree
 nice_columns = ['Publication Year', 'Average Rating', 'Number of Pages', 'Number of Works', 'Number of Fans',
                 'Number of Ratings', 'Author Gender', 'Single-Read Authors']
 dot_data = StringIO()
-# class_names = ['{}-star'.format(x) for x in range(0, 2)]
-# class_names = ['1-4 stars', '5-star']
-class_names = ['1-3 stars', '4-star', '5-star']
 tree.export_graphviz(clf, out_file=dot_data,
                      feature_names=nice_columns,
                      class_names=class_names,
@@ -107,6 +109,13 @@ prediction = rf.predict(df_test)
 print(classification_report(test_label, prediction))
 cm = confusion_matrix(test_label, prediction)
 pretty_cm(cm, label_names=class_names, show_sum=True)
+
+# Heat map of the confusion matrix
+sns.heatmap(cm, square=True, xticklabels=class_names, annot=True, fmt="d",
+            yticklabels=class_names, cbar=True, cbar_kws={"orientation": "vertical"},
+            cmap="BuGn") \
+    .set(xlabel="Predicted Class", ylabel="Actual Class")
+plt.savefig('figures/confusion_matrix.png')
 
 # Save model
 os.system('rm -rf data/model/ratings*')
@@ -137,6 +146,12 @@ importance['Type'] = ['Rating'] * len(importance)
 importance_reg['Type'] = ['Positivity'] * len(importance_reg)
 importance = importance.append(importance_reg).reset_index()
 
+# Inter-tree variability
+std1 = np.std([tree.feature_importances_ for tree in rf.estimators_], axis=0)  # rating
+std2 = np.std([tree.feature_importances_ for tree in rf_reg.estimators_], axis=0)  # positivity
+std = [std1, std2]
+
+# g = sns.barplot(x='Feature', y='Importance', data=importance, hue='Type', palette='Set1', yerr=std, ecolor='black')
 g = sns.barplot(x='Feature', y='Importance', data=importance, hue='Type', palette='Set1')
 g.set_xlabel('Feature')
 g.set_ylabel('Importance')
