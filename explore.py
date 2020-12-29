@@ -108,3 +108,14 @@ g.set_ylabel('Books Reviewed')
 g.set_xticklabels(g.xaxis.get_majorticklabels(), rotation=90)
 plt.tight_layout()
 plt.savefig('figures/author_frequency.png')
+
+
+# My rating by top author
+author_list = top_authors.keys()
+favs_df = df[df['author'].isin(author_list)]
+g = sns.boxplot(x="rating", y="author", data=favs_df, palette="vlag", whis=[0, 100], width=.6)
+# g = sns.stripplot(x="rating", y="author", data=favs_df, size=4, color=".3", linewidth=0, jitter=0.2)
+g.set_xlabel('My Rating')
+g.set_ylabel('Author')
+plt.tight_layout()
+plt.savefig('figures/rating_author.png')
