@@ -73,7 +73,7 @@ for name in set(df['author']):
     author = gc.find_author(name)
     print(name)
     try:
-        print author._author_dict
+        print(author._author_dict)
         works = author.works_count
         fans = author.fans_count()['#text']
         town = author.hometown

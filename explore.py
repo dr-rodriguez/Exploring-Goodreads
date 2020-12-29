@@ -1,4 +1,4 @@
-# Script to explore the data obtained from the Google API
+# Script to explore the data
 
 import pickle
 import pandas as pd
@@ -11,11 +11,13 @@ from nltk.stem.porter import PorterStemmer
 import string
 from utilities import my_replacements
 from collections import OrderedDict
-import numpy as np
 
-# Load data extracted from API (118 reviews)
-with open('data/reviews.pkl','r') as f:
+# Load data extracted from API/CSV
+with open('data/books.pkl', 'rb') as f:
     df = pickle.load(f)
+
+# Remove non-reviews
+df = df[~df['text'].isnull()]
 
 # Numeric columns
 numeric_columns = ['rating', 'timespan', 'year_read', 'publication_year', 'publication_month',
@@ -25,16 +27,17 @@ for col in numeric_columns:
 
 
 # Settings
-max_words = 20
+max_words = 25
 use_stemming = False
+author_threshold = 3  # how many books to include for the author counts
 
 
 # Word Frequency Chart of my reviews
 porter = PorterStemmer()
 stop_words = set(stopwords.words('english'))
 stop_words.update([s for s in string.punctuation] + ['...', 'b', '://', 'strakul', 'blogspot',
-                                                     'com', 'full', 'review', 'blog'])
-
+                                                     'com', 'full', 'review', 'blog', 'html', 'jpg'])
+text = ''
 text = ' '.join(df['text'].tolist())
 
 # Clean up the text
@@ -50,7 +53,8 @@ else:
 
 top_words = OrderedDict(words.most_common(max_words))
 
-g = sns.barplot(x=top_words.keys(), y=top_words.values(), palette='Blues')
+word_data = pd.DataFrame([(k, top_words[k]) for k in top_words], columns=['Word', 'Counts'])
+g = sns.barplot(x='Word', y='Counts', palette='rocket', data=word_data)
 g.set_xlabel('Word')
 g.set_ylabel('Counts')
 g.set_xticklabels(g.xaxis.get_majorticklabels(), rotation=90)
@@ -59,7 +63,7 @@ plt.savefig('figures/words_frequency.png')
 
 
 # My Rating vs Avg Raging
-g = sns.lmplot(x="rating", y="average_rating", data=df, x_jitter=0.5, size=8, scatter_kws={'s': 80})
+g = sns.lmplot(x="rating", y="average_rating", data=df, x_jitter=0.5, height=8, scatter_kws={'s': 80})
 g.set_xlabels('My Rating (with 0.5 jitter)')
 g.set_ylabels('Average Rating')
 g.savefig('figures/rating_comparison.png')
@@ -70,50 +74,16 @@ g = sns.lmplot(x="year_read", y="publication_year", hue='rating', data=df, fit_r
                legend=False, scatter_kws={'s': 80})
 
 # Labels on old books
-year_books = df[(df['publication_year'] < 1995) & (df['year_read'].notnull())]
+year_books = df[(df['publication_year'] < 1984) & (df['year_read'].notnull())]
 for x, y, t in zip(year_books['year_read'].tolist(), year_books['publication_year'].tolist(),
                    year_books['title'].map(lambda x: x.split('(')[0].strip()).tolist()):
     plt.text(x+0.5, y-0.5, t, color='k', ha='center', va='top')
 
-g.set_xlabels('Year Read')
+g.set_xlabels('Year Read (or Added)')
 g.set_ylabels('Year Published')
 g.ax.get_xaxis().get_major_formatter().set_useOffset(False)
 g.fig.get_axes()[0].legend(title='My Rating', loc='lower right')
 g.savefig('figures/years.png')
-
-
-# Days to read vs Number of pages
-g = sns.lmplot(x="number_pages", y="timespan", data=df, size=8, scatter_kws={'s': 80})
-g = (g.set(xlim=(-10, 1250), ylim=(-10, 120))
-     .set_xlabels('Number of Pages')
-     .set_ylabels('Days to Read'))
-# Labels on longest to read
-longest = df[(df['timespan'] > 30) & (df['number_pages'].notnull())]
-for x, y, t in zip(longest['number_pages'].tolist(), longest['timespan'].tolist(),
-                   longest['title'].map(lambda x: x.split('(')[0].strip()).tolist()):
-    plt.text(x-1, y+2, t, color='k', ha='right', va='center')
-
-g.savefig('figures/reading_rate.png')
-
-
-# Shortest reads (some may be in error)
-df[df['timespan'] < 2]
-
-
-# Reading rate over time
-df['rate'] = df['number_pages']/df['timespan']
-df.replace([np.inf, -np.inf], np.nan, inplace=True)  # Fixing infinite values
-df.groupby(by='year_read', axis=0)[['timespan','number_pages','rate']].mean()
-
-g = sns.factorplot(x='year_read', y='rate', data=df, size=8)
-g = (g.set(ylim=(-10, 200))
-     .set_xlabels('Year Read')
-     .set_ylabels('Number of Pages Read Per Day'))
-# Annotate with how many books read for that year. NOTE: not all books have pages/timespan
-count = df.groupby(by='year_read', axis=0)[['rate', 'title']].count().reset_index()
-for i, row in count.iterrows():
-    plt.text(i, 2, '{}/{}'.format(row['rate'], row['title']), color='k', ha='center', va='center')
-g.savefig('figures/reading_rate_2.png')
 
 
 # Most frequent authors
@@ -122,7 +92,7 @@ freq_author = Counter(df['author'])
 count = 0
 others = 0
 for author in freq_author:
-    if freq_author[author] < 2:
+    if freq_author[author] < author_threshold:
         others += freq_author[author]
     else:
         count += 1
@@ -130,7 +100,9 @@ for author in freq_author:
 # Quick Plot to check most frequent authors
 top_authors = OrderedDict(freq_author.most_common(count))
 top_authors['Other Authors'] = others
-g = sns.barplot(x=top_authors.keys(), y=top_authors.values(), palette="Greens_d")
+author_data = pd.DataFrame([(k, top_authors[k]) for k in top_authors], columns=['Author', 'Books'])
+# g = sns.barplot(x=top_authors.keys(), y=top_authors.values(), palette="Greens_d")
+g = sns.barplot(x='Author', y='Books', palette="Greens_d", data=author_data)
 g.set_xlabel('Author')
 g.set_ylabel('Books Reviewed')
 g.set_xticklabels(g.xaxis.get_majorticklabels(), rotation=90)
